@@ -1,6 +1,16 @@
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
-COPY . .
+
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+
+
+# Dá permissão e baixa as dependências (bom para cache)
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline
+
+COPY src src
 RUN chmod +x mvnw && ./mvnw clean package -DskipTests
 
 FROM eclipse-temurin:21-jre

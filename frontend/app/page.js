@@ -1,7 +1,18 @@
-import PostCard from '../components/PostCard'
-import PostForm from '../components/PostForm'
-import { getPosts } from '../lib/api'
-export default async function Home() {
-  const posts = await getPosts()
-  return <main className="container"><h1>Social App</h1><PostForm />{posts.map((post) => <PostCard key={post.id} post={post} />)}</main>
+'use client'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function Home() {
+  const router = useRouter()
+
+  useEffect(() => {
+    const user = localStorage.getItem('user')
+    if (user) {
+      router.push('/feed')
+    } else {
+      router.push('/login')
+    }
+  }, [router])
+
+  return <div>Redirecionando...</div>
 }

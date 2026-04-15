@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/socialdb}
-    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER}}
-    password: ${DB_PASSWORD}
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:abc123}
   jpa:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
@@ -10,5 +10,10 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always  
 server:
   port: 8080
