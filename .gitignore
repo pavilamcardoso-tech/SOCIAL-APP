@@ -1,0 +1,33 @@
+### Java / Maven ###
+backend/target/
+backend/*.jar
+backend/*.war
+
+### IDEs (IntelliJ, Eclipse, VS Code) ###
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+bin/
+
+### Node / Next.js ###
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+### Docker ###
+# Se você criou uma pasta local para o volume do Postgres
+postgres_data/
+
+### Sistema ###
+.DS_Store
+Thumbs.db
+
+*.env
