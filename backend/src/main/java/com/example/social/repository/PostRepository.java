@@ -1,4 +1,10 @@
 package com.example.social.repository;
 import com.example.social.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
-public interface PostRepository extends JpaRepository<Post, Long> {}
+import org.springframework.data.jpa.repository.Query;
+import  java.util.List;
+public interface PostRepository extends JpaRepository<Post, Long> {
+
+    @Query("SELECT p FROM Post p JOIN FETCH p.user")
+    List<Post> findAllWithUser();
+}
