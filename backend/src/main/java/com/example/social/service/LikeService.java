@@ -7,6 +7,7 @@ import com.example.social.repository.LikeRepository;
 import com.example.social.repository.PostRepository;
 import com.example.social.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Service
@@ -17,6 +18,8 @@ public class LikeService {
     public LikeService(LikeRepository likeRepository, UserRepository userRepository, PostRepository postRepository) {
         this.likeRepository = likeRepository; this.userRepository = userRepository; this.postRepository = postRepository;
     }
+
+    @Transactional
     public long like(Long postId, Long userId) {
         if (!likeRepository.existsByUserIdAndPostId(userId, postId)) {
             User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -25,6 +28,8 @@ public class LikeService {
         }
         return likeRepository.countByPostId(postId);
     }
+
+    @Transactional
     public long unlike(Long postId, Long userId) {
         likeRepository.deleteByUserIdAndPostId(userId, postId);
         return likeRepository.countByPostId(postId);

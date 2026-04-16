@@ -11,6 +11,7 @@ export default function Profile() {
   const [posts, setPosts] = useState([])
   const [loadingPosts, setLoadingPosts] = useState(false)
   const [postsError, setPostsError] = useState('')
+  const [order, setOrder] = useState('createdAt:desc')
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user')
@@ -25,10 +26,11 @@ export default function Profile() {
     if (!user?.id) return
 
     let cancelled = false
+    const [sortBy, direction] = order.split(':')
     setLoadingPosts(true)
     setPostsError('')
 
-    getPosts({ userId: user.id })
+    getPosts({ userId: user.id, sortBy, direction })
       .then((data) => {
         if (cancelled) return
         setPosts(Array.isArray(data) ? data : [])
@@ -46,7 +48,7 @@ export default function Profile() {
     return () => {
       cancelled = true
     }
-  }, [user?.id])
+  }, [user?.id, order])
 
   if (!user) return <div>Carregando...</div>
 
@@ -58,6 +60,16 @@ export default function Profile() {
           <p><strong>Nome:</strong> {user.name ?? user.username}</p>
           <p><strong>Email:</strong> {user.email}</p>
           <h3>Meus Posts</h3>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+            <label>
+              <strong>Ordenar:</strong>{' '}
+              <select value={order} onChange={(e) => setOrder(e.target.value)}>
+                <option value="createdAt:desc">Mais recentes</option>
+                <option value="likes:desc">Mais curtidos</option>
+                <option value="createdAt:asc">Mais antigos</option>
+              </select>
+            </label>
+          </div>
           <PostForm />
           {postsError && <p style={{ color: 'red' }}>{postsError}</p>}
           {loadingPosts ? (

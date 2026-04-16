@@ -13,12 +13,15 @@ public class PostController {
     private final PostService postService;
     public PostController(PostService postService) { this.postService = postService; }
     @GetMapping
-    public List<PostResponse> findAll() { return postService.findAll(); }
+    public List<PostResponse> findPosts(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
+    ) {
+        return postService.findPosts(userId, sortBy, direction);
+    }
 
-    @PostMapping public PostResponse create(@RequestBody CreatePostRequest request) { return postService.create(request); }
-    
-
-    @GetMapping(params = "userId")
-    public List<PostResponse> findByUserId(@RequestParam Long userId) { return postService.findByUserId(userId); }
+    @PostMapping
+    public PostResponse create(@RequestBody CreatePostRequest request) { return postService.create(request); }
 }
 

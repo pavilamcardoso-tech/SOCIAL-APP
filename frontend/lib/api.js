@@ -1,12 +1,16 @@
 const API_BASE = 'http://127.0.0.1:8080/api'
 
-export async function getPosts({ userId } = {}) {
-  const url =
-    userId === undefined || userId === null
-      ? `${API_BASE}/posts`
-      : `${API_BASE}/posts?userId=${encodeURIComponent(userId)}`
+export async function getPosts({ userId, sortBy = 'createdAt', direction = 'desc' } = {}) {
+  const params = new URLSearchParams()
 
-  const res = await fetch(url, { cache: 'no-store' })
+  if (userId !== undefined && userId !== null) {
+    params.set('userId', userId)
+  }
+
+  params.set('sortBy', sortBy)
+  params.set('direction', direction)
+
+  const res = await fetch(`${API_BASE}/posts?${params.toString()}`, { cache: 'no-store' })
   if (!res.ok) throw new Error('Erro ao buscar posts')
   return res.json()
 }

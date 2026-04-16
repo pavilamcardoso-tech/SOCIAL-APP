@@ -1,0 +1,207 @@
+package com.example.social;
+
+import com.example.social.entity.Post;
+import com.example.social.entity.User;
+import com.example.social.repository.LikeRepository;
+import com.example.social.repository.PostRepository;
+import com.example.social.repository.UserRepository;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
+class ApiEndpointsTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private LikeRepository likeRepository;
+
+    private User gabriel;
+    private User maria;
+    private Post gabrielPost;
+
+    @BeforeEach
+    void setUp() {
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
+
+        likeRepository.deleteAll();
+        postRepository.deleteAll();
+        userRepository.deleteAll();
+
+        gabriel = userRepository.save(User.builder()
+                .username("gabriel")
+                .email("gabriel@email.com")
+                .password("123")
+                .build());
+
+        maria = userRepository.save(User.builder()
+                .username("maria")
+                .email("maria@email.com")
+                .password("123")
+                .build());
+
+        gabrielPost = postRepository.save(Post.builder()
+                .user(gabriel)
+                .imageUrl("https://example.com/gabriel.jpg")
+                .description("Post do Gabriel")
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        postRepository.save(Post.builder()
+                .user(maria)
+                .imageUrl("https://example.com/maria.jpg")
+                .description("Post da Maria")
+                .createdAt(LocalDateTime.now())
+                .build());
+    }
+
+    @Test
+    void shouldRegisterUser() {
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "username", "joao",
+                        "email", "joao@email.com",
+                        "password", "123456"
+                ))
+        .when()
+                .post("/api/auth/register")
+        .then()
+                .statusCode(200)
+                .body("id", notNullValue())
+                .body("username", equalTo("joao"))
+                .body("email", equalTo("joao@email.com"));
+    }
+
+    @Test
+    void shouldLoginSuccessfully() {
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "email", "gabriel@email.com",
+                        "password", "123"
+                ))
+        .when()
+                .post("/api/auth/login")
+        .then()
+                .statusCode(200)
+                .body("success", equalTo(true))
+                .body("user.id", equalTo(gabriel.getId().intValue()))
+                .body("user.email", equalTo("gabriel@email.com"));
+    }
+
+    @Test
+    void shouldRejectInvalidLogin() {
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "email", "gabriel@email.com",
+                        "password", "senha-errada"
+                ))
+        .when()
+                .post("/api/auth/login")
+        .then()
+                .statusCode(200)
+                .body("success", equalTo(false))
+                .body("message", equalTo("Credenciais inválidas"));
+    }
+
+    @Test
+    void shouldListAllPosts() {
+        given()
+        .when()
+                .get("/api/posts")
+        .then()
+                .statusCode(200)
+                .body("$", hasSize(2))
+                .body("[0].id", notNullValue())
+                .body("[0].username", notNullValue());
+    }
+
+    @Test
+    void shouldFilterPostsByUser() {
+        given()
+                .queryParam("userId", gabriel.getId())
+        .when()
+                .get("/api/posts")
+        .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].id", equalTo(gabrielPost.getId().intValue()))
+                .body("[0].username", equalTo("gabriel"))
+                .body("[0].description", equalTo("Post do Gabriel"));
+    }
+
+    @Test
+    void shouldCreatePost() {
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "userId", gabriel.getId(),
+                        "imageUrl", "https://example.com/new-post.jpg",
+                        "description", "Novo post de teste"
+                ))
+        .when()
+                .post("/api/posts")
+        .then()
+                .statusCode(200)
+                .body("id", notNullValue())
+                .body("username", equalTo("gabriel"))
+                .body("imageUrl", equalTo("https://example.com/new-post.jpg"))
+                .body("description", equalTo("Novo post de teste"))
+                .body("likeCount", equalTo(0));
+    }
+
+    @Test
+    void shouldLikePost() {
+        given()
+                .queryParam("userId", maria.getId())
+        .when()
+                .post("/api/posts/{postId}/like", gabrielPost.getId())
+        .then()
+                .statusCode(200)
+                .body("likes", greaterThanOrEqualTo(1));
+    }
+
+    @Test
+    void shouldUnlikePost() {
+        given()
+                .queryParam("userId", maria.getId())
+        .when()
+                .post("/api/posts/{postId}/like", gabrielPost.getId())
+        .then()
+                .statusCode(200);
+
+        given()
+                .queryParam("userId", maria.getId())
+        .when()
+                .delete("/api/posts/{postId}/like", gabrielPost.getId())
+        .then()
+                .statusCode(200)
+                .body("likes", equalTo(0));
+    }
+}
