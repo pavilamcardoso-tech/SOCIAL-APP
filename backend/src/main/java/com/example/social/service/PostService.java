@@ -27,4 +27,8 @@ public class PostService {
         Post saved = postRepository.save(Post.builder().user(user).imageUrl(request.imageUrl()).description(request.description()).createdAt(LocalDateTime.now()).build());
         return new PostResponse(saved.getId(), user.getUsername(), saved.getImageUrl(), saved.getDescription(), 0, saved.getCreatedAt());
     }
+
+    public  List<PostResponse> findByUserId(Long userId) {
+        return postRepository.findByUserId(userId).stream().map(post -> new PostResponse(post.getId(), post.getUser().getUsername(), post.getImageUrl(), post.getDescription(), likeRepository.countByPostId(post.getId()), post.getCreatedAt())).toList();
+    }
 }

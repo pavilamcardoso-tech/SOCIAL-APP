@@ -12,6 +12,13 @@ import java.util.List;
 public class PostController {
     private final PostService postService;
     public PostController(PostService postService) { this.postService = postService; }
-    @GetMapping public List<PostResponse> findAll() { return postService.findAll(); }
+    @GetMapping
+    public List<PostResponse> findAll() { return postService.findAll(); }
+
     @PostMapping public PostResponse create(@RequestBody CreatePostRequest request) { return postService.create(request); }
+    
+
+    @GetMapping(params = "userId")
+    public List<PostResponse> findByUserId(@RequestParam Long userId) { return postService.findByUserId(userId); }
 }
+

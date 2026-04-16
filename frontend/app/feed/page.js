@@ -9,9 +9,6 @@ import  AuthGuard from '../../components/AuthGuard'
 export default async function Feed() {
   const posts = await getPosts()
   
- 
-
- 
   return (
     <>
       <AuthGuard>
