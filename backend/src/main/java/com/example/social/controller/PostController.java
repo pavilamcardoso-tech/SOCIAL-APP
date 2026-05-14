@@ -11,17 +11,31 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class PostController {
     private final PostService postService;
-    public PostController(PostService postService) { this.postService = postService; }
+
+    public PostController(PostService postService) {
+        this.postService = postService;
+    }
+
     @GetMapping
     public List<PostResponse> findPosts(
             @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) Long currentUserId
     ) {
-        return postService.findPosts(userId, sortBy, direction);
+        return postService.findPosts(userId, sortBy, direction, currentUserId);
+    }
+
+    @GetMapping("/{postId}")
+    public PostResponse findById(
+            @PathVariable Long postId,
+            @RequestParam(required = false) Long currentUserId
+    ) {
+        return postService.findById(postId, currentUserId);
     }
 
     @PostMapping
-    public PostResponse create(@RequestBody CreatePostRequest request) { return postService.create(request); }
+    public PostResponse create(@RequestBody CreatePostRequest request) {
+        return postService.create(request);
+    }
 }
-
