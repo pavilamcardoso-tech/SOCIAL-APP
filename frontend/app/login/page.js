@@ -1,5 +1,7 @@
 'use client'
+
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { loginUser } from '../../lib/api'
 
@@ -7,31 +9,40 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault()
+    setError('')
+    setSubmitting(true)
     try {
       const result = await loginUser({ email, password })
       if (result.success) {
         localStorage.setItem('user', JSON.stringify(result.user))
-        router.push('/feed')
+        router.push('/')
+        router.refresh()
       } else {
-        setError(result.message)
+        setError(result.message || 'Credenciais inválidas')
       }
-    } catch (err) {
-      setError('Erro ao fazer login')
+    } catch {
+      setError('Erro ao fazer login. Tente novamente.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
-    <div className="container">
-      <div className="form">
-        <h2>Login</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <form onSubmit={handleSubmit}>
+    <main className="mx-auto max-w-md">
+      <div className="card space-y-4 p-6">
+        <header className="space-y-1">
+          <h1 className="text-xl font-bold">Entrar</h1>
+          <p className="text-sm text-neutral-500">Acesse sua conta para curtir, comentar e postar.</p>
+        </header>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
           <input
-            className="input"
+            className="input-field"
             type="email"
             placeholder="Email"
             value={email}
@@ -39,17 +50,24 @@ export default function Login() {
             required
           />
           <input
-            className="input"
+            className="input-field"
             type="password"
             placeholder="Senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <button className="button" type="submit">Entrar</button>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button type="submit" disabled={submitting} className="btn-primary w-full">
+            {submitting ? 'Entrando…' : 'Entrar'}
+          </button>
         </form>
-        <p>Não tem conta? <a href="/signup">Cadastrar</a></p>
+
+        <p className="text-center text-sm text-neutral-500">
+          Não tem conta?{' '}
+          <Link href="/signup" className="font-semibold text-brand-600 hover:underline">Cadastre-se</Link>
+        </p>
       </div>
-    </div>
+    </main>
   )
 }

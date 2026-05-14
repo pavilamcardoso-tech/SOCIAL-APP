@@ -1,53 +1,85 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { createPost } from '../lib/api'
 
-export default function PostForm() {
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Avatar from './Avatar'
+import { createPost } from '../lib/api'
+import { getCurrentUser } from './AuthGate'
+
+export default function PostForm({ onCreated }) {
+  const router = useRouter()
   const [imageUrl, setImageUrl] = useState('')
   const [description, setDescription] = useState('')
-  const [user, setUser] = useState(null)
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
-    }
-  }, [])
+  const user = typeof window !== 'undefined' ? getCurrentUser() : null
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!user?.id) {
-      setError('Faça login para publicar um post.')
+    setError('')
+    const currentUser = getCurrentUser()
+    if (!currentUser?.id) return router.push('/login')
+    if (!imageUrl.trim() || !description.trim()) {
+      setError('Imagem e descrição são obrigatórias.')
       return
     }
 
+    setSubmitting(true)
     try {
-      await createPost({ userId: user.id, imageUrl, description })
-      window.location.reload()
-    } catch {
-      setError('Erro ao publicar post')
+      const created = await createPost({
+        userId: currentUser.id,
+        imageUrl: imageUrl.trim(),
+        description: description.trim(),
+      })
+      setImageUrl('')
+      setDescription('')
+      onCreated?.(created)
+      router.refresh()
+    } catch (err) {
+      setError(err.message || 'Erro ao publicar.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
+  if (!user) {
+    return (
+      <div className="card flex items-center justify-between gap-3 px-4 py-3 text-sm">
+        <span className="text-neutral-600">Quer compartilhar algo?</span>
+        <button onClick={() => router.push('/login')} className="btn-primary">Entrar para postar</button>
+      </div>
+    )
+  }
+
   return (
-    <form className="form" onSubmit={handleSubmit}>
-      <h2>Novo post</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <form onSubmit={handleSubmit} className="card space-y-3 p-4">
+      <div className="flex items-center gap-3">
+        <Avatar username={user.username} avatarUrl={user.avatarUrl} />
+        <p className="text-sm font-semibold">@{user.username}</p>
+      </div>
       <input
-        className="input"
-        placeholder="URL da imagem"
+        type="url"
+        className="input-field"
+        placeholder="URL da imagem (ex: https://images.unsplash.com/...)"
         value={imageUrl}
         onChange={(e) => setImageUrl(e.target.value)}
+        required
       />
       <textarea
-        className="textarea"
-        placeholder="Descrição"
+        className="input-field min-h-[80px] resize-y"
+        placeholder="Escreva uma legenda…"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        maxLength={1000}
+        required
       />
-      <button className="button" type="submit">Publicar</button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex justify-end">
+        <button type="submit" disabled={submitting} className="btn-primary">
+          {submitting ? 'Publicando…' : 'Publicar'}
+        </button>
+      </div>
     </form>
   )
 }
-  

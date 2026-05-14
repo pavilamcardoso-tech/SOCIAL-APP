@@ -9,10 +9,19 @@ import lombok.*;
 public class User {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(nullable = false)
     private String username;
+
     @Column(nullable = false, unique = true)
     private String email;
+
     @Column(nullable = false)
     private String password;
+
+    @Column(length = 500)
+    private String avatarUrl;
+
+    @Column(length = 200)
+    private String bio;
 }
